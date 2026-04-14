@@ -1,43 +1,36 @@
-#include <gtk/gtk.h>
-
-static void
-print_hello (GtkWidget *widget,
-             gpointer   data)
-{
-  g_print ("Hello World\n");
-}
-
-static void
-activate (GtkApplication *app,
-          gpointer        user_data)
-{
-  GtkWidget *window;
-  GtkWidget *button;
-
-  window = gtk_application_window_new (app);
-  gtk_window_set_title (GTK_WINDOW (window), "Hello");
-  gtk_window_set_default_size (GTK_WINDOW (window), 200, 200);
-
-  button = gtk_button_new_with_label ("Hello World");
-  gtk_widget_set_halign(button, GTK_ALIGN_CENTER);
-  gtk_widget_set_valign(button, GTK_ALIGN_CENTER);
-  g_signal_connect (button, "clicked", G_CALLBACK (print_hello), NULL);
-  gtk_window_set_child (GTK_WINDOW (window), button);
-
-  gtk_window_present (GTK_WINDOW (window));
-}
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "sqlite3.h"
+#include "dtypes.h"
 
 int
-main (int    argc,
-      char **argv)
+main(void)
 {
-  GtkApplication *app;
-  int status;
+  sqlite3 *db;
+  sqlite3_stmt *stmt;
 
-  app = gtk_application_new ("org.gtk.example", 0);
-  g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
-  status = g_application_run (G_APPLICATION (app), argc, argv);
-  g_object_unref (app);
+  int rc = sqlite3_open("./data/expense_tracker.db", &db);
 
-  return status;
+  const char *command = "SELECT * from transactions";
+  rc = sqlite3_prepare_v2(db, command, -1, &stmt, NULL);
+
+  int num_col = sqlite3_column_count(stmt);
+
+  dvar_t *row = (dvar_t *)malloc(sizeof(dvar_t) * num_col);
+
+  printf("Number of Columns: %d\n", num_col);
+
+  for(int i = 0; i < num_col; i++) {
+    dtype_t type = GET_DTYPE(sqlite3_column_decltype(stmt, i));
+    const char *name = sqlite3_column_name(stmt, i);
+    row[i] = CREATE_DVAR(type, name, NULL);
+    printf("|%d (%s)", i, row[i].name);
+  }
+  printf("|\n");
+  while(sqlite3_step(stmt) == SQLITE_ROW) {
+  }
+
+  sqlite3_finalize(stmt);
+  sqlite3_close(db);
 }
