@@ -23,8 +23,8 @@ link_directories(${SQLITE3_LIBRARY_DIRS})
 
 set(SOURCES
     src/main.c
-    src/dtypes.c
-)
+    src/ec_db.c
+    )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 

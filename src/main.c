@@ -1,36 +1,56 @@
+/*******************************************************************************
+ * @file main.c
+ * @breif Application entry point
+ *******************************************************************************/
+
+/*******************************************************************************
+ * Global header inclusion
+ *******************************************************************************/
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+/*******************************************************************************
+ * Library inclusion
+ *******************************************************************************/
 #include "sqlite3.h"
-#include "dtypes.h"
+
+/*******************************************************************************
+ * local header inclusion
+ *******************************************************************************/
+#include "ec_queries.h"
+#include "ec_db.h"
 
 int
 main(void)
 {
-  sqlite3 *db;
-  sqlite3_stmt *stmt;
+  ec_db_t *database = EC_DB_OPEN("./data/expense_tracker.db");
+  EC_COMMAND command = EC_SQL_GET_TRANSACTIONS;
 
-  int rc = sqlite3_open("./data/expense_tracker.db", &db);
+  database->command = command;
 
-  const char *command = "SELECT * from transactions";
-  rc = sqlite3_prepare_v2(db, command, -1, &stmt, NULL);
+  ec_db_get_table(database);
+  printf("Number of rows and colums: %d, %d\n",
+         database->table.row,
+         database->table.col);
+ 
+  // print header
+  for(int c = 0; c < database->table.col; c++)
+    printf("%-15s", database->table.result[c]);
+  printf("\n");
 
-  int num_col = sqlite3_column_count(stmt);
-
-  dvar_t *row = (dvar_t *)malloc(sizeof(dvar_t) * num_col);
-
-  printf("Number of Columns: %d\n", num_col);
-
-  for(int i = 0; i < num_col; i++) {
-    dtype_t type = GET_DTYPE(sqlite3_column_decltype(stmt, i));
-    const char *name = sqlite3_column_name(stmt, i);
-    row[i] = CREATE_DVAR(type, name, NULL);
-    printf("|%d (%s)", i, row[i].name);
+  // print data rows
+  for(int r = 1; r <= database->table.row; r++) {
+    for(int c = 0; c < database->table.col; c++) {
+      char *cell = ec_table_get_cell(database, r, c);
+      printf("%-15s", cell ? cell : "NULL");
+    }
+    printf("\n");
   }
-  printf("|\n");
-  while(sqlite3_step(stmt) == SQLITE_ROW) {
-  }
 
-  sqlite3_finalize(stmt);
-  sqlite3_close(db);
+  EC_DB_CLOSE(database);
+
+  return 0;
 }
+
+
