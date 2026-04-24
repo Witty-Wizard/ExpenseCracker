@@ -122,3 +122,33 @@ ec_db_print_table(ec_db_t *database)
     printf("\n");
   }
 }
+
+void
+ec_db_get_account_ledger(ec_db_t *database, int account_id)
+{
+  if(!database)
+    return;
+
+  if(database->table.result) {
+    sqlite3_free_table(database->table.result);
+    database->table.result = NULL;
+  }
+
+  size_t sql_size = sizeof(EC_SQL_GET_ACCOUNT_LEDGER);
+  EC_COMMAND sql = (EC_COMMAND)malloc(sql_size);
+  if(!sql)
+    return;
+
+  snprintf((char *)sql, sql_size, EC_SQL_GET_ACCOUNT_LEDGER, account_id);
+
+  sqlite3_get_table(
+    database->db,
+    sql,
+    &database->table.result,
+    &database->table.row,
+    &database->table.col,
+    &database->table.err
+  );
+
+  free((char *)sql);
+}

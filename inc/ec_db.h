@@ -69,4 +69,10 @@ void ec_db_free_table(ec_db_t *database);
  */
 void ec_db_print_table(ec_db_t *database);
 
+/**
+ * @brief
+ *
+ * @param[IN
+ */
+void ec_db_get_account_ledger(ec_db_t *database, int account_id);
 #endif
